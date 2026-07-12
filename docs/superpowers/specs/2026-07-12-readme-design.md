@@ -21,7 +21,7 @@
 
 ## 平台兼容策略
 
-仓库保留现有 SKILL 结构，不复制或改写核心规则。Codex 安装到 `${CODEX_HOME:-$HOME/.codex}/skills/reviewing-article-quality`。Claude Code 安装到用户级 `$HOME/.claude/skills/reviewing-article-quality`；同时说明也可放到项目级 `.claude/skills/`，便于团队随仓库共享。
+仓库保留现有 SKILL 结构，不复制或改写核心规则。Codex 安装到 `$HOME/.agents/skills/reviewing-article-quality`。Claude Code 安装到用户级 `$HOME/.claude/skills/reviewing-article-quality`；同时说明也可放到项目级 `.claude/skills/`，便于团队随仓库共享。
 
 示例优先使用显式名称 `reviewing-article-quality`，同时说明自然语言请求也可以触发该能力。Claude Code 部分不依赖 `agents/openai.yaml`，因为核心工作流与评分规则都位于 `SKILL.md` 和 `references/` 中。
 
