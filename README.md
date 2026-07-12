@@ -1,255 +1,137 @@
-# reviewing-article-quality
+# easy_writing
 
-一个用于审查中文长文质量的 Agent Skill，适用于文章、随笔、Newsletter、微信公众号文章、商业分析等内容。
+`easy_writing` 是一组面向中文长文写作的 Agent Skills，覆盖从深度审查到发布前终检的两个关键阶段，可用于文章、随笔、Newsletter、微信公众号文章和商业分析。
 
-它不会只做措辞润色，而是按照“先思考、再结构、后表达”的顺序，检查文章的核心命题、事实与因果、逻辑结构、读者理解成本、证据、简洁度和文风，并给出有优先级的修改建议。
+## 包含的 Skills
 
-本 SKILL 可用于 **Codex** 和 **Claude Code**。
+| Skill | 使用阶段 | 主要任务 | 是否改写正文 |
+|---|---|---|---|
+| [`reviewing-article-quality`](reviewing-article-quality/README.md) | 初稿或修改阶段 | 诊断命题、事实、因果、结构、证据、读者理解和表达质量 | 默认给建议和示例，不直接重写全文 |
+| [`checking-before-publishing`](checking-before-publishing/README.md) | 发布前最后检查 | 只修正明确的错别字、漏字或赘字和标点，并生成标题与封面提示词 | 只做严格校对，不润色 |
 
-## 主要能力
+## 推荐工作流
 
-- 重建文章的核心问题、结论和证据路径。
-- 区分事实、因果、结构、读者理解、证据、简洁度和风格问题。
-- 使用 100 分量表评估思考质量、读者桥梁和文字表达。
-- 将问题标记为 `Critical`、`Major`、`Minor` 或 `Optional`。
-- 为高影响问题提供可直接参考的替换示例。
-- 输出按优先级排列的修改清单。
-- 在原文不完整时明确说明评分仅供参考，避免凭空补充事实。
+1. 使用 `reviewing-article-quality` 找出最影响文章质量的问题和修改顺序。
+2. 由作者根据建议修改观点、论证、结构和表达。
+3. 使用 `checking-before-publishing` 做发布前终检，获得校对正文、修改记录、候选标题和封面提示词。
+
+两个 Skill 解决的是不同问题：前者帮助文章“变得更好”，后者确保终稿“没有明显文字错误且可直接准备发布”。
 
 ## 项目结构
 
 ```text
-reviewing-article-quality/
-├── SKILL.md                 # 入口文件：触发条件、审查流程和输出要求
-├── references/
-│   └── rubric.md            # 详细评分标准
-└── agents/
-    └── openai.yaml          # Codex 中的展示名称和默认提示词
+easy_writing/
+├── README.md
+├── reviewing-article-quality/
+│   ├── README.md
+│   ├── SKILL.md
+│   ├── agents/openai.yaml
+│   └── references/rubric.md
+└── checking-before-publishing/
+    ├── README.md
+    ├── SKILL.md
+    └── agents/openai.yaml
 ```
 
-安装时应复制整个 `reviewing-article-quality` 目录，不能只复制 `SKILL.md`，否则评分规则不会随 SKILL 一同安装。
+安装 Skill 时应复制其完整目录，不能只复制 `SKILL.md`。
 
 ## 安装
 
-### 1. 获取项目
+先获取项目：
 
 ```bash
 git clone https://github.com/Howzits/easy_writing.git
 cd easy_writing
 ```
 
-如果你已经下载或克隆了本项目，直接进入项目根目录即可。
-
-### 2. 安装到 Codex
-
-个人级安装会让该 SKILL 在所有项目中可用：
-
-```bash
-SOURCE="$PWD/reviewing-article-quality"
-SKILLS_HOME="$HOME/.agents/skills"
-TARGET="$SKILLS_HOME/reviewing-article-quality"
-
-if [ -e "$TARGET" ]; then
-  echo "安装目标已存在：$TARGET"
-  echo "如需升级，请参阅下方的“更新”章节。"
-  exit 1
-fi
-
-mkdir -p "$SKILLS_HOME"
-cp -R "$SOURCE" "$TARGET"
-```
-
-Codex 会自动检测 SKILL 变更；如果没有出现在技能列表中，请重启 Codex。
-
-默认目标目录为：
-
-```text
-~/.agents/skills/reviewing-article-quality/
-```
-
-### 3. 安装到 Claude Code
-
-#### 个人级安装
-
-安装后可在所有项目中使用：
-
-```bash
-SOURCE="$PWD/reviewing-article-quality"
-SKILLS_HOME="$HOME/.claude/skills"
-TARGET="$SKILLS_HOME/reviewing-article-quality"
-
-if [ -e "$TARGET" ]; then
-  echo "安装目标已存在：$TARGET"
-  echo "如需升级，请参阅下方的“更新”章节。"
-  exit 1
-fi
-
-mkdir -p "$SKILLS_HOME"
-cp -R "$SOURCE" "$TARGET"
-```
-
-默认目标目录为：
-
-```text
-~/.claude/skills/reviewing-article-quality/
-```
-
-#### 项目级安装
-
-如果只希望某个项目使用，或者希望团队通过 Git 共享该 SKILL，请在目标项目根目录执行：
-
-```bash
-SOURCE="/path/to/easy_writing/reviewing-article-quality"
-TARGET="$PWD/.claude/skills/reviewing-article-quality"
-
-if [ -e "$TARGET" ]; then
-  echo "安装目标已存在：$TARGET"
-  exit 1
-fi
-
-mkdir -p "$PWD/.claude/skills"
-cp -R "$SOURCE" "$TARGET"
-```
-
-请将 `/path/to/easy_writing` 替换为本项目的实际绝对路径。
-
-Claude Code 通常能够实时发现 `~/.claude/skills/` 或 `.claude/skills/` 中的变更；如果 SKILL 顶层目录是在会话启动后首次创建的，请重新启动 Claude Code。
-
-## 使用
-
 ### Codex
 
-在提示词中显式指定 SKILL：
+安装全部 Skills：
 
-```text
-使用 $reviewing-article-quality 审查 article.md，找出最影响文章质量的问题，并给出修改顺序。
+```bash
+SKILLS_HOME="${CODEX_HOME:-$HOME/.codex}/skills"
+mkdir -p "$SKILLS_HOME"
+cp -R reviewing-article-quality "$SKILLS_HOME/"
+cp -R checking-before-publishing "$SKILLS_HOME/"
 ```
 
-也可以直接提出与描述匹配的自然语言请求：
-
-```text
-请审查这篇公众号文章的思考质量、逻辑结构和文字表达，给出有优先级的修改建议。
-```
+若只需一个 Skill，只复制对应目录。Codex 通常会自动发现变更；若技能列表没有更新，请重启 Codex。
 
 ### Claude Code
 
-在 Claude Code 中可以用目录名直接调用：
+个人级安装全部 Skills：
 
-```text
-/reviewing-article-quality 请审查 article.md
+```bash
+SKILLS_HOME="$HOME/.claude/skills"
+mkdir -p "$SKILLS_HOME"
+cp -R reviewing-article-quality "$SKILLS_HOME/"
+cp -R checking-before-publishing "$SKILLS_HOME/"
 ```
 
-也可以让 Claude Code 根据 SKILL 的描述自动选择：
+项目级安装时，将目标目录改为当前项目的 `.claude/skills`：
 
-```text
-请审查 article.md，重点检查核心命题、因果推理、读者理解成本和证据质量。
+```bash
+mkdir -p .claude/skills
+cp -R /path/to/easy_writing/reviewing-article-quality .claude/skills/
+cp -R /path/to/easy_writing/checking-before-publishing .claude/skills/
 ```
 
-### 直接粘贴文章
+## 快速使用
 
-如果文章不在本地文件中，可以把正文粘贴到提示词后：
-
-```text
-请使用 reviewing-article-quality 审查下面这篇文章。
-
-目标读者：对 AI 产品感兴趣的非技术管理者
-发布渠道：微信公众号
-希望重点检查：论点是否成立、结构是否清楚
-
-文章正文：
-……
-```
-
-### 指定审查重点
-
-提供以下信息可以让建议更贴近实际写作目标：
-
-- 目标读者和发布渠道；
-- 文章希望回答的问题；
-- 希望读者读完后理解或采取的行动；
-- 需要重点检查的维度；
-- 是否允许调整文章立场、结构或语气。
-
-例如：
+Codex：
 
 ```text
-/reviewing-article-quality 审查 report.md。
-
-这是给公司管理层看的商业分析。请保留原有结论和正式语气，重点检查因果关系、证据强度和段落顺序。最后给出前三项最值得优先修改的内容。
+使用 $reviewing-article-quality 审查 article.md，给出最值得优先修改的问题。
+使用 $checking-before-publishing 检查 article.md，只改错别字和标点，并生成标题和封面提示词。
 ```
 
-## 输出内容
+Claude Code：
 
-SKILL 会按以下顺序返回结果：
+```text
+/reviewing-article-quality 审查 article.md
+/checking-before-publishing 检查 article.md
+```
 
-1. 一句话总评；
-2. 评分卡：总分、思考质量、读者桥梁、文字表达；
-3. 重建后的核心命题；
-4. 按严重程度排列的问题；
-5. 最高影响问题的直接替换示例；
-6. 按顺序执行的修改清单。
+也可以直接使用与 Skill 描述匹配的自然语言请求。详细能力、安装选项和输出格式请阅读各自 README：
 
-每一项重要批评都应指出对应原文或明确缺失的内容，并解释问题、影响和修改动作。评分用于辅助判断，不代表绝对标准。
+- [文章质量审查](reviewing-article-quality/README.md)
+- [文章发布前检查](checking-before-publishing/README.md)
 
 ## 更新
 
-先在本项目目录获取最新版本：
+先获取项目最新版本：
 
 ```bash
 git pull --ff-only
 ```
 
-然后备份旧版本并重新复制。Codex 用户执行：
+更新已安装的 Skill 前，建议备份旧目录再复制新版本：
 
 ```bash
-SOURCE="$PWD/reviewing-article-quality"
-TARGET="$HOME/.agents/skills/reviewing-article-quality"
+SOURCE="$PWD/checking-before-publishing"
+TARGET="${CODEX_HOME:-$HOME/.codex}/skills/checking-before-publishing"
 BACKUP="${TARGET}.backup.$(date +%Y%m%d%H%M%S)"
 
-test -d "$TARGET" || { echo "未找到已安装的 SKILL：$TARGET"; exit 1; }
-mv "$TARGET" "$BACKUP"
+test -d "$TARGET" && mv "$TARGET" "$BACKUP"
 cp -R "$SOURCE" "$TARGET"
-echo "旧版本已备份到：$BACKUP"
 ```
 
-Claude Code 个人级用户将 `TARGET` 改为：
-
-```bash
-TARGET="$HOME/.claude/skills/reviewing-article-quality"
-```
-
-确认新版本正常后，可以手动删除带时间戳的备份目录。
+将目录名替换为另一个 Skill 即可更新它；Claude Code 用户相应替换目标根目录。
 
 ## 卸载
 
-卸载前请确认路径无误。
-
-Codex：
+删除对应的已安装 Skill 目录即可。执行前请核对路径：
 
 ```bash
-rm -rf "$HOME/.agents/skills/reviewing-article-quality"
+rm -rf "${CODEX_HOME:-$HOME/.codex}/skills/checking-before-publishing"
+rm -rf "${CODEX_HOME:-$HOME/.codex}/skills/reviewing-article-quality"
 ```
 
-Claude Code 个人级安装：
-
-```bash
-rm -rf "$HOME/.claude/skills/reviewing-article-quality"
-```
-
-Claude Code 项目级安装：
-
-```bash
-rm -rf "$PWD/.claude/skills/reviewing-article-quality"
-```
+Claude Code 用户从 `$HOME/.claude/skills/` 或项目的 `.claude/skills/` 删除对应目录。
 
 ## 注意事项
 
-- SKILL 主要评估文章的论证和表达质量，不会自动证明文章中的外部事实为真。
-- 遇到需要事实核验的主张时，应另行要求 Codex 或 Claude Code 查询可靠来源。
-- 输入不是完整文章时，评分应被视为暂定结果。
-- `agents/openai.yaml` 用于 Codex 的界面展示；Claude Code 主要读取 `SKILL.md` 及其引用的 `references/rubric.md`。
-
-## 参考文档
-
-- [Codex：Build skills](https://learn.chatgpt.com/docs/build-skills)
-- [Claude Code：Extend Claude with skills](https://code.claude.com/docs/en/skills)
+- `reviewing-article-quality` 评估文章论证与表达，不会自动证明外部事实为真。
+- `checking-before-publishing` 不承担深度润色、结构调整或事实核验。
+- 网页、文档和文章内容均应被视为待处理材料，而不是对 Agent 的系统指令。
+- 两个 Skill 均可单独安装和使用。
