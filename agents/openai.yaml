@@ -1,0 +1,4 @@
+interface:
+  display_name: "文章质量审查"
+  short_description: "诊断文章思考、逻辑、结构与表达质量并提供修改建议"
+  default_prompt: "Use $reviewing-article-quality to review this article and give prioritized, evidence-based revision advice."
