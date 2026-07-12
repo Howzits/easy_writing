@@ -1,0 +1,4 @@
+interface:
+  display_name: "文章发布前检查"
+  short_description: "严格检查文章错别字和标点符号，并生成候选标题与封面图提示词"
+  default_prompt: "使用 $checking-before-publishing 检查这篇公众号文章的发布终稿。"
